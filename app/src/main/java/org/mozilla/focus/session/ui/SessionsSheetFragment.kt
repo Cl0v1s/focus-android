@@ -6,15 +6,15 @@ package org.mozilla.focus.session.ui
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
+import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.os.Bundle
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
-
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import org.mozilla.focus.R
 import org.mozilla.focus.activity.MainActivity
 import org.mozilla.focus.ext.requireComponents
@@ -56,7 +56,7 @@ class SessionsSheetFragment : LocaleAwareFragment(), View.OnClickListener {
     @Suppress("ComplexMethod")
     private fun playAnimation(reverse: Boolean): Animator {
         isAnimating = true
-
+        /**
         val offset = resources.getDimensionPixelSize(R.dimen.floating_action_button_size) / 2
         val cx = cardView.measuredWidth - offset
         val cy = cardView.measuredHeight - offset
@@ -84,6 +84,31 @@ class SessionsSheetFragment : LocaleAwareFragment(), View.OnClickListener {
             })
             start()
         }
+        */
+
+        val sheetAnimator = ValueAnimator.ofFloat(if (reverse) 1f else 0f, if (reverse) 0f else 1f);
+        sheetAnimator.apply {
+            duration = ANIMATION_DURATION.toLong()
+            interpolator = AccelerateInterpolator()
+            addUpdateListener(AnimatorUpdateListener {
+                cardView.scaleX = it.animatedValue as Float
+                cardView.scaleY = it.animatedValue as Float
+                cardView.alpha = it.animatedValue as Float
+            })
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    cardView.visibility = View.VISIBLE
+                }
+
+                override fun onAnimationEnd(animation: Animator) {
+                    isAnimating = false
+
+                    cardView.visibility = if (reverse) View.GONE else View.VISIBLE
+                }
+            })
+            start()
+        }
+
 
         backgroundView.alpha = if (reverse) 1f else 0f
         backgroundView.animate()
