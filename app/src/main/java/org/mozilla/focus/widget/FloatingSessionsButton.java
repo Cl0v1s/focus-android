@@ -10,13 +10,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.text.TextPaint;
 import android.util.AttributeSet;
 
 import org.mozilla.focus.R;
 
-public class FloatingSessionsButton extends FloatingActionButton {
+public class FloatingSessionsButton extends FloatingMovableButton {
     /**
      * The Answer to the Ultimate Question of Life, the Universe, and Everything. And the number of
      * tabs that is just too many.

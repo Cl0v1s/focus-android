@@ -67,4 +67,8 @@
     <string name="pref_key_screen_exceptions" translatable="false">
         <xliff:g id="preference_key">pref_screen_exceptions</xliff:g>
     </string>
+
+    <string name="pref_key_erase_button_x" translatable="false"><xliff:g id="preference_key">pref_erase_button_x</xliff:g></string>
+    <string name="pref_key_erase_button_y" translatable="false"><xliff:g id="preference_key">pref_erase_button_y</xliff:g></string>
+
 </resources>
