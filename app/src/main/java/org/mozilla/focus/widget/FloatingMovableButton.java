@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 
@@ -64,7 +65,6 @@ public class FloatingMovableButton extends FloatingActionButton {
         setRight(x + width);
         setTop(y);
         setBottom(y + height);
-
     }
 
     private void updateSettings() {
@@ -74,10 +74,25 @@ public class FloatingMovableButton extends FloatingActionButton {
                 Context.MODE_PRIVATE
         );
 
+
+        int top = ((int)getY());
+        int left = ((int)getX());
+
+        int height = getBottom() - getTop();
+        int width = getRight() - getLeft();
+
+        setTranslationX(0);
+        setTranslationY(0);
+
+        setLeft(left);
+        setRight(left+width);
+        setTop(top);
+        setBottom(top+height);
+
         SharedPreferences.Editor editor = sharedPref.edit();
         // We use getX and getY because x and y were used during the dragging process
-        editor.putInt(context.getString(R.string.pref_key_erase_button_x), (int)getX());
-        editor.putInt(context.getString(R.string.pref_key_erase_button_y), (int)getY());
+        editor.putInt(context.getString(R.string.pref_key_erase_button_x), left);
+        editor.putInt(context.getString(R.string.pref_key_erase_button_y), top);
         editor.apply();
     }
 
@@ -133,8 +148,9 @@ public class FloatingMovableButton extends FloatingActionButton {
                 } else if (x > rangeWidth - getWidth()) {
                     x = rangeWidth - getWidth();
                 }
-                if (getY() < 180) { // we prevent the button to override navBar
-                    y = 180;
+
+                if (getY() < (170 + EDGEDIS)) { // we prevent the button to override navBar
+                    y = (170 + EDGEDIS);
                 } else if (getY() + getHeight() > rangeHeight - EDGEDIS) {
                     y = rangeHeight - getHeight() - EDGEDIS;
                 }
@@ -151,33 +167,18 @@ public class FloatingMovableButton extends FloatingActionButton {
                 if (!isNotDrag()) {
                     // recovery from press
                     setPressed(false);
-                    if (rawX >= rangeWidth / 2) {
-                        // attract right
-                        animate().setInterpolator(new DecelerateInterpolator())
-                                .setDuration(DURATION)
-                                // keep 50 pixel away from the edge
-                                .xBy(rangeWidth - getWidth() - getX() - EDGEDIS)
-                                .withEndAction(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        updateSettings();
-                                    }
-                                })
-                                .start();
-                    } else {
-                        // attract left
-                        animate().setInterpolator(new DecelerateInterpolator())
-                                .setDuration(DURATION)
-                                // keep 50 pixel away from the edge
-                                .xBy(- (getX() - EDGEDIS))
-                                .withEndAction(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        updateSettings();
-                                    }
-                                })
-                                .start();
-                    }
+                    // attract right
+                    animate().setInterpolator(new DecelerateInterpolator())
+                            .setDuration(DURATION)
+                            // keep 50 pixel away from the edge
+                            .xBy((rawX >= rangeWidth / 2) ? (rangeWidth - getWidth() - getX() - EDGEDIS) : (-(getX() - EDGEDIS)))
+                            .withEndAction(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateSettings();
+                                }
+                            })
+                            .start();
                 }
                 break;
 
