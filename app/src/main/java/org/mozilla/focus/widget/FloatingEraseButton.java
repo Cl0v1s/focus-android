@@ -4,13 +4,19 @@
 
 package org.mozilla.focus.widget;
 
+import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.view.MotionEvent;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.view.animation.AnimationUtils;
+
+import android.util.Log;
 
 import org.mozilla.focus.R;
 
@@ -28,6 +34,17 @@ public class FloatingEraseButton extends FloatingActionButton {
     public FloatingEraseButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
+
+    // range of movement
+    private int rangeHeight;
+    private int rangeWidth;
+    // the start position of button
+    private int startX;
+    private int startY;
+    // state of dragging
+    private boolean isDrag;
+    final static public int EDGEDIS = 50;
+    final static public int DURATION = 500;
 
     public void updateSessionsCount(int tabCount) {
         final CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) getLayoutParams();
@@ -73,5 +90,103 @@ public class FloatingEraseButton extends FloatingActionButton {
         } else {
             hide();
         }
+    }
+
+    // override onToucheVent so that button can listen the touch inputs (press/unpressed/drag)
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        // catch the touch position
+        int rawX = (int) event.getRawX();
+        int rawY = (int) event.getRawY();
+        switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            // press the button
+            case MotionEvent.ACTION_DOWN:
+                setPressed(true);
+                isDrag = false;
+                getParent().requestDisallowInterceptTouchEvent(true);
+                // save the start location of button
+                startX = rawX;
+                startY = rawY;
+                // Gets the parent of this button which is the range of movement.
+                ViewGroup parent;
+                if (getParent() != null) {
+                    parent = (ViewGroup) getParent();
+                    // get the range of height and width
+                    rangeHeight = parent.getHeight();
+                    rangeWidth = parent.getWidth();
+                }
+                break;
+            // dragging the button
+            case MotionEvent.ACTION_MOVE:
+                // if the range is valid then start drag the button else break
+                if (rangeHeight <= 0 || rangeWidth == 0) {
+                    isDrag = false;
+                    break;
+                } else {
+                    isDrag = true;
+                }
+                // calculate the distance of x and y from start location
+                int disX = rawX - startX;
+                int disY = rawY - startY;
+                int distance = (int) Math.sqrt(disX * disX + disY * disY);
+                // special case if the distance is 0 end dragging set the state to false
+                if (distance == 0) {
+                    isDrag = false;
+                    break;
+                }
+                // button size included
+                float x = getX() + disX;
+                float y = getY() + disY;
+                // test if reached the edge: left up right down
+                if (x < 0) {
+                    x = 0;
+                } else if (x > rangeWidth - getWidth()) {
+                    x = rangeWidth - getWidth();
+                }
+                if (getY() < 0) {
+                    y = 0;
+                } else if (getY() + getHeight() > rangeHeight - EDGEDIS) {
+                    y = rangeHeight - getHeight() - EDGEDIS;
+                }
+                // Set the position of the button after dragging
+                setX(x);
+                setY(y);
+                // update the start position during dragging
+                startX = rawX;
+                startY = rawY;
+                break;
+
+            // unpressed button
+            case MotionEvent.ACTION_UP:
+                if (!isNotDrag()) {
+                    // recovery from press
+                    setPressed(false);
+                    if (rawX >= rangeWidth / 2) {
+                        // attract right
+                        animate().setInterpolator(new DecelerateInterpolator())
+                                .setDuration(DURATION)
+                                // keep 50 pixel away from the edge
+                                .xBy(rangeWidth - getWidth() - getX() - EDGEDIS)
+                                .start();
+                    } else {
+                        // attract left
+                        ObjectAnimator oa = ObjectAnimator.ofFloat(this, "x", getX(), EDGEDIS);
+                        oa.setInterpolator(new DecelerateInterpolator());
+                        oa.setDuration(DURATION);
+                        oa.start();
+                    }
+                }
+                break;
+
+            default:
+                break;
+        }
+        // if drag then update session otherwise pass
+        return !isNotDrag() || super.onTouchEvent(event);
+    }
+
+    // check is drag or not
+    private boolean isNotDrag() {
+        return !isDrag && (getX() == EDGEDIS || (getX() == rangeWidth - getWidth() - EDGEDIS));
     }
 }
