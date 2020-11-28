@@ -56,35 +56,6 @@ class SessionsSheetFragment : LocaleAwareFragment(), View.OnClickListener {
     @Suppress("ComplexMethod")
     private fun playAnimation(reverse: Boolean): Animator {
         isAnimating = true
-        /**
-        val offset = resources.getDimensionPixelSize(R.dimen.floating_action_button_size) / 2
-        val cx = cardView.measuredWidth - offset
-        val cy = cardView.measuredHeight - offset
-
-        // The final radius is the diagonal of the card view -> sqrt(w^2 + h^2)
-        val fullRadius = Math.sqrt(
-            Math.pow(cardView.width.toDouble(), 2.0) + Math.pow(cardView.height.toDouble(), 2.0)
-        ).toFloat()
-
-        val sheetAnimator = ViewAnimationUtils.createCircularReveal(
-            cardView, cx, cy, if (reverse) fullRadius else 0f, if (reverse) 0f else fullRadius
-        ).apply {
-            duration = ANIMATION_DURATION.toLong()
-            interpolator = AccelerateInterpolator()
-            addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationStart(animation: Animator) {
-                    cardView.visibility = View.VISIBLE
-                }
-
-                override fun onAnimationEnd(animation: Animator) {
-                    isAnimating = false
-
-                    cardView.visibility = if (reverse) View.GONE else View.VISIBLE
-                }
-            })
-            start()
-        }
-        */
 
         val sheetAnimator = ValueAnimator.ofFloat(if (reverse) 1f else 0f, if (reverse) 0f else 1f);
         sheetAnimator.apply {
