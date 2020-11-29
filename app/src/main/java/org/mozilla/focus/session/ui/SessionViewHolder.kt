@@ -6,9 +6,11 @@ package org.mozilla.focus.session.ui
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import androidx.recyclerview.widget.RecyclerView
+import android.view.MotionEvent
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import mozilla.components.browser.session.Session
 import org.mozilla.focus.R
 import org.mozilla.focus.ext.beautifyUrl
@@ -19,17 +21,19 @@ import java.lang.ref.WeakReference
 class SessionViewHolder internal constructor(
     private val fragment: SessionsSheetFragment,
     private val textView: TextView
-) : RecyclerView.ViewHolder(textView), View.OnClickListener {
+) : RecyclerView.ViewHolder(textView), View.OnTouchListener {
     companion object {
         @JvmField
         internal val LAYOUT_ID = R.layout.item_session
     }
 
     private var sessionReference: WeakReference<Session> = WeakReference<Session>(null)
+    private var startX: Float = 0f
+    private var startY: Float = 0f
 
     init {
         textView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_link, 0, 0, 0)
-        textView.setOnClickListener(this)
+        textView.setOnTouchListener(this)
     }
 
     fun bind(session: Session) {
@@ -57,7 +61,7 @@ class SessionViewHolder internal constructor(
             else session.title
     }
 
-    override fun onClick(view: View) {
+    fun onClick() {
         val session = sessionReference.get() ?: return
         selectSession(session)
     }
@@ -71,4 +75,50 @@ class SessionViewHolder internal constructor(
             }
         })
     }
+
+    private fun removeSession(session: Session) {
+        fragment.requireComponents.sessionManager.remove(session)
+    }
+
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
+        val rawX = event.rawX
+        val rawY = event.rawY
+        val disX = (rawX - startX)
+        val disY = (rawY - startY)
+        val distance = Math.sqrt((disX * disX + disY * disY).toDouble()).toInt()
+        when(event.action and MotionEvent.ACTION_MASK) {
+            MotionEvent.ACTION_DOWN -> {
+                startX = rawX
+                startY = rawY
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if(distance > 0 && disX > 0) {
+                    textView.x = distance.toFloat()
+                    if(disX > textView.width / 2) {
+                        val session = sessionReference.get()
+                        removeSession(session!!)
+                    }
+                }
+            }
+            MotionEvent.ACTION_UP -> {
+                if(distance == 0) onClick()
+                textView.animate()
+                        .setInterpolator(DecelerateInterpolator())
+                        .setDuration(300)
+                        .xBy(-textView.x)
+                        .start()
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                textView.animate()
+                        .setInterpolator(DecelerateInterpolator())
+                        .setDuration(300)
+                        .xBy(-textView.x)
+                        .start()
+                return true
+            }
+            else -> return false
+        }
+        return true
+    }
+
 }
