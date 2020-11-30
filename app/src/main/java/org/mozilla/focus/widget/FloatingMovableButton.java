@@ -45,6 +45,15 @@ public class FloatingMovableButton extends FloatingActionButton {
         super.onLayout(changed, left, top, right, bottom);
 
         if(changed == false) return;
+        // Gets the parent of this button which is the range of movement.
+        ViewGroup parent;
+        if (getParent() != null) {
+            parent = (ViewGroup) getParent();
+            // get the range of height and width
+            rangeHeight = parent.getHeight();
+            rangeWidth = parent.getWidth();
+        }
+
         retrieveAndApplySettings();
     }
 
@@ -58,13 +67,16 @@ public class FloatingMovableButton extends FloatingActionButton {
         int height = getBottom() - getTop();
         int width = getRight() - getLeft();
 
-        int x = sharedPref.getInt(context.getString(R.string.pref_key_erase_button_x), getLeft());
-        int y = sharedPref.getInt(context.getString(R.string.pref_key_erase_button_y), getTop());
+        int leftPercent = sharedPref.getInt(context.getString(R.string.pref_key_erase_button_x), getLeft());
+        int topPercent = sharedPref.getInt(context.getString(R.string.pref_key_erase_button_y), getTop());
 
-        setLeft(x);
-        setRight(x + width);
-        setTop(y);
-        setBottom(y + height);
+        float x = ((float)leftPercent) / 100 * ((float)rangeWidth);
+        float y = ((float)topPercent) / 100 * ((float)rangeHeight);
+
+        setLeft((int)x);
+        setRight((int)x + width);
+        setTop((int)y);
+        setBottom((int)y + height);
     }
 
     private void updateSettings() {
@@ -75,8 +87,8 @@ public class FloatingMovableButton extends FloatingActionButton {
         );
 
 
-        int top = ((int)getY());
-        int left = ((int)getX());
+        float top = getY();
+        float left = getX();
 
         int height = getBottom() - getTop();
         int width = getRight() - getLeft();
@@ -84,15 +96,18 @@ public class FloatingMovableButton extends FloatingActionButton {
         setTranslationX(0);
         setTranslationY(0);
 
-        setLeft(left);
-        setRight(left+width);
-        setTop(top);
-        setBottom(top+height);
+        setLeft((int)left);
+        setRight((int)left+width);
+        setTop((int)top);
+        setBottom((int)top+height);
+
+        float leftPercent = (left / ((float)rangeWidth)) * 100f;
+        float topPercent = (top / ((float)rangeHeight)) * 100f;
 
         SharedPreferences.Editor editor = sharedPref.edit();
         // We use getX and getY because x and y were used during the dragging process
-        editor.putInt(context.getString(R.string.pref_key_erase_button_x), left);
-        editor.putInt(context.getString(R.string.pref_key_erase_button_y), top);
+        editor.putInt(context.getString(R.string.pref_key_erase_button_x), (int)leftPercent);
+        editor.putInt(context.getString(R.string.pref_key_erase_button_y), (int)topPercent);
         editor.apply();
     }
 
@@ -112,14 +127,6 @@ public class FloatingMovableButton extends FloatingActionButton {
                 // save the start location of button
                 startX = rawX;
                 startY = rawY;
-                // Gets the parent of this button which is the range of movement.
-                ViewGroup parent;
-                if (getParent() != null) {
-                    parent = (ViewGroup) getParent();
-                    // get the range of height and width
-                    rangeHeight = parent.getHeight();
-                    rangeWidth = parent.getWidth();
-                }
                 break;
             // dragging the button
             case MotionEvent.ACTION_MOVE:
