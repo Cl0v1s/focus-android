@@ -94,7 +94,7 @@ class SessionViewHolder internal constructor(
             MotionEvent.ACTION_MOVE -> {
                 if(distance > 0 && disX > 0) {
                     textView.x = distance.toFloat()
-                    if(disX > textView.width / 2) {
+                    if(disX > textView.width / 3) {
                         val session = sessionReference.get()
                         removeSession(session!!)
                     }
