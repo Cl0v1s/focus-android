@@ -88,10 +88,15 @@ class SessionViewHolder internal constructor(
         val distance = Math.sqrt((disX * disX + disY * disY).toDouble()).toInt()
         when(event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
+                v.parent.requestDisallowInterceptTouchEvent(true);
                 startX = rawX
                 startY = rawY
             }
             MotionEvent.ACTION_MOVE -> {
+                if(Math.abs(disY) > 100) {
+                    v.parent.requestDisallowInterceptTouchEvent(false);
+                    return true;
+                }
                 if(distance > 0 && disX > 0) {
                     textView.x = distance.toFloat()
                     if(disX > textView.width / 3) {
@@ -114,7 +119,6 @@ class SessionViewHolder internal constructor(
                         .setDuration(300)
                         .xBy(-textView.x)
                         .start()
-                return true
             }
             else -> return false
         }
